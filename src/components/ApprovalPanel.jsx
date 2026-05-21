@@ -3,6 +3,41 @@ import { formatCurrency, formatDateTime, getSeverityColor } from '../utils/forma
 
 export function ApprovalPanel({ claim, estimate, assessment, onApprove, onReject, approval, role }) {
   const [comment, setComment] = useState('');
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleExport = () => {
+    window.print();
+  };
+
+  const handleSend = (action) => {
+    showToast(`✅ ${action} — ${claim.id}`);
+  };
+
+  const renderHandoffActions = () => (
+    <div className="handoff-actions">
+      <div className="handoff-label">Handoff</div>
+      <div className="handoff-buttons">
+        <button className="btn btn-secondary" onClick={handleExport}>
+          📄 Export Report
+        </button>
+        {approval?.decision === 'approved' ? (
+          <button className="btn btn-primary" onClick={() => handleSend('Authorization sent to repair shop')}>
+            📧 Send Authorization
+          </button>
+        ) : (
+          <button className="btn btn-primary" onClick={() => handleSend('Claim returned to agent for amendment')}>
+            📧 Return to Agent
+          </button>
+        )}
+      </div>
+      {toast && <div className="handoff-toast">{toast}</div>}
+    </div>
+  );
 
   const renderSummary = () => (
     <div className="approval-summary">
@@ -139,6 +174,7 @@ export function ApprovalPanel({ claim, estimate, assessment, onApprove, onReject
             </div>
           )}
         </div>
+        {renderHandoffActions()}
       </div>
     );
   }
@@ -158,9 +194,22 @@ export function ApprovalPanel({ claim, estimate, assessment, onApprove, onReject
             {approval.comments && <p>{approval.comments}</p>}
             {approval.decidedAt && <p>Date: {formatDateTime(approval.decidedAt)}</p>}
           </div>
+          {renderHandoffActions()}
         </div>
       );
     }
+
+    const [showRejectForm, setShowRejectForm] = useState(false);
+    const [rejectReason, setRejectReason] = useState('');
+    const [rejectDetails, setRejectDetails] = useState('');
+
+    const rejectionReasons = [
+      'Insufficient documentation',
+      'Damage inconsistent with reported incident',
+      'Pre-existing damage suspected',
+      'Coverage exclusion applies',
+      'Requires in-person inspection',
+    ];
 
     return (
       <div className="card fade-in">
@@ -170,41 +219,89 @@ export function ApprovalPanel({ claim, estimate, assessment, onApprove, onReject
         {renderSummary()}
         {renderCaseFile()}
 
-        <textarea
-          className="approval-comment-input"
-          placeholder="Add review comments..."
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-        />
+        {!showRejectForm && (
+          <>
+            <textarea
+              className="approval-comment-input"
+              placeholder="Add review comments..."
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+            />
 
-        <div className="approval-actions">
-          <button
-            className="btn btn-success btn-lg"
-            onClick={() =>
-              onApprove({
-                decision: 'approved',
-                reviewer: 'Sr. Adjuster Williams',
-                comments: comment,
-                decidedAt: new Date().toISOString(),
-              })
-            }
-          >
-            Approve
-          </button>
-          <button
-            className="btn btn-danger btn-lg"
-            onClick={() =>
-              onReject({
-                decision: 'rejected',
-                reviewer: 'Sr. Adjuster Williams',
-                comments: comment,
-                decidedAt: new Date().toISOString(),
-              })
-            }
-          >
-            Reject
-          </button>
-        </div>
+            <div className="approval-actions">
+              <button
+                className="btn btn-success btn-lg"
+                onClick={() =>
+                  onApprove({
+                    decision: 'approved',
+                    reviewer: 'Sr. Adjuster Williams',
+                    comments: comment,
+                    decidedAt: new Date().toISOString(),
+                  })
+                }
+              >
+                Approve
+              </button>
+              <button
+                className="btn btn-danger btn-lg"
+                onClick={() => setShowRejectForm(true)}
+              >
+                Reject
+              </button>
+            </div>
+          </>
+        )}
+
+        {showRejectForm && (
+          <div className="rejection-form fade-in">
+            <h4 className="rejection-form-title">⚠️ Rejection Details</h4>
+            <p className="rejection-form-desc">Provide a reason so the agent can amend and resubmit.</p>
+
+            <label className="form-label">Reason</label>
+            <select
+              className="rejection-reason-select"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            >
+              <option value="">Select a reason...</option>
+              {rejectionReasons.map((reason) => (
+                <option key={reason} value={reason}>{reason}</option>
+              ))}
+            </select>
+
+            <label className="form-label" style={{ marginTop: 'var(--space-md)' }}>Details</label>
+            <textarea
+              className="approval-comment-input"
+              placeholder="Explain what needs to be corrected or what additional information is needed..."
+              value={rejectDetails}
+              onChange={(e) => setRejectDetails(e.target.value)}
+            />
+
+            <div className="approval-actions">
+              <button
+                className="btn btn-secondary btn-lg"
+                onClick={() => setShowRejectForm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger btn-lg"
+                disabled={!rejectReason || !rejectDetails.trim()}
+                onClick={() =>
+                  onReject({
+                    decision: 'rejected',
+                    reviewer: 'Sr. Adjuster Williams',
+                    reason: rejectReason,
+                    comments: `${rejectReason}: ${rejectDetails}`,
+                    decidedAt: new Date().toISOString(),
+                  })
+                }
+              >
+                Confirm Rejection
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
