@@ -2,6 +2,8 @@
 
 An intelligent claims processing prototype that demonstrates how AI can automate damage assessment, cost estimation, and approval workflows for car insurance claims.
 
+**🔗 Live Demo: [claims-ai-xi.vercel.app](https://claims-ai-xi.vercel.app/)**
+
 ## 🚀 Quick Start
 
 ```bash
