@@ -282,7 +282,7 @@ export function Dashboard({ claims, onAddClaim }) {
             <col className="col-dot" />
             <col className="col-id" />
             <col className="col-name" />
-            <col className="col-vehicle" style={{ width: '100%' }} />
+            <col className="col-vehicle" />
             <col className="col-date" />
             <col className="col-photos" />
             <col className="col-status" />

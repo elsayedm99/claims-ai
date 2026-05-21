@@ -530,12 +530,18 @@ a:hover {
 .claims-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 /* Column widths via colgroup */
-.col-dot { width: 40px; }
-.col-photos { width: 50px; }
-.col-action { width: 90px; }
+.col-dot { width: 4%; }
+.col-id { width: 14%; }
+.col-name { width: 16%; }
+.col-vehicle { width: 22%; }
+.col-date { width: 14%; }
+.col-photos { width: 8%; }
+.col-status { width: 13%; }
+.col-action { width: 9%; }
 
 /* Dot cell */
 .cell-dot {
