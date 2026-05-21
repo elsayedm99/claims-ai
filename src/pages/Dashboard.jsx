@@ -280,7 +280,9 @@ export function Dashboard({ claims, onAddClaim }) {
         <table className="claims-table">
           <thead>
             <tr>
-              <th style={{ width: 28, padding: '0 0 0 var(--space-md)' }}></th>
+              <th style={{ width: 28, padding: '0 0 0 var(--space-md)' }}>
+                <span className="priority-dot" style={{ background: 'var(--color-text-muted)' }} />
+              </th>
               <th>Claim ID</th>
               <th>Policyholder</th>
               <th>Vehicle</th>
