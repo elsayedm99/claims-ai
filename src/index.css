@@ -530,7 +530,17 @@ a:hover {
 .claims-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
+
+.claims-table th:nth-child(1) { width: 32px; }
+.claims-table th:nth-child(2) { width: 14%; }
+.claims-table th:nth-child(3) { width: 16%; }
+.claims-table th:nth-child(4) { width: auto; }
+.claims-table th:nth-child(5) { width: 14%; }
+.claims-table th:nth-child(6) { width: 5%; }
+.claims-table th:nth-child(7) { width: 15%; }
+.claims-table th:nth-child(8) { width: 10%; }
 
 .claims-table th {
   text-align: left;
