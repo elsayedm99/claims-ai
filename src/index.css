@@ -537,6 +537,7 @@ a:hover {
   text-align: right;
   width: 1%;
   white-space: nowrap;
+  padding-right: var(--space-md);
 }
 
 .claims-table th {
