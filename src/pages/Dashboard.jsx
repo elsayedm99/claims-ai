@@ -280,6 +280,7 @@ export function Dashboard({ claims, onAddClaim }) {
         <table className="claims-table">
           <thead>
             <tr>
+              <th style={{ width: 28, padding: '0 0 0 var(--space-md)' }}></th>
               <th>Claim ID</th>
               <th>Policyholder</th>
               <th>Vehicle</th>
@@ -295,12 +296,14 @@ export function Dashboard({ claims, onAddClaim }) {
                 key={claim.id}
                 onClick={() => navigate(`/claim/${claim.id}`)}
               >
-                <td>
+                <td style={{ width: 28, padding: '0 0 0 var(--space-md)' }}>
                   <span
                     className="priority-dot"
                     style={{ background: getPriorityColor(claim) }}
                     title="Priority"
                   />
+                </td>
+                <td>
                   <span className="claim-id">{claim.id}</span>
                 </td>
                 <td>
