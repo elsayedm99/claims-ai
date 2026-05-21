@@ -286,7 +286,7 @@ export function Dashboard({ claims, onAddClaim }) {
               <th>Accident Date</th>
               <th>📷</th>
               <th>Status</th>
-              <th style={{ textAlign: 'right' }}>Action</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -323,7 +323,7 @@ export function Dashboard({ claims, onAddClaim }) {
                 <td>
                   <StatusBadge status={claim.status} />
                 </td>
-                <td style={{ textAlign: 'right' }}>
+                <td>
                   <button
                     className="btn btn-sm btn-secondary"
                     onClick={(e) => {

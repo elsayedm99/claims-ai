@@ -530,16 +530,14 @@ a:hover {
 .claims-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
 }
 
-.claims-table th:nth-child(1) { width: 16%; }
-.claims-table th:nth-child(2) { width: 17%; }
-.claims-table th:nth-child(3) { width: 22%; }
-.claims-table th:nth-child(4) { width: 14%; }
-.claims-table th:nth-child(5) { width: 5%; }
-.claims-table th:nth-child(6) { width: 15%; }
-.claims-table th:nth-child(7) { width: 11%; }
+.claims-table th:last-child,
+.claims-table td:last-child {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}
 
 .claims-table th {
   text-align: left;
@@ -558,6 +556,7 @@ a:hover {
   border-bottom: 1px solid rgba(226, 229, 239, 0.8);
   font-size: var(--font-size-base);
   vertical-align: middle;
+  white-space: nowrap;
   transition: all var(--transition-fast);
 }
 
