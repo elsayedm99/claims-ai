@@ -549,6 +549,10 @@ a:hover {
   text-align: right !important;
 }
 
+.claims-table thead tr {
+  background: rgba(245, 246, 250, 0.9);
+}
+
 .claims-table th {
   text-align: left;
   padding: var(--space-lg);
@@ -558,7 +562,7 @@ a:hover {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-bottom: 1px solid var(--color-border);
-  background: rgba(245, 246, 250, 0.9);
+  background: transparent;
 }
 
 .claims-table td {
