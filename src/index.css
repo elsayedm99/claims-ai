@@ -530,18 +530,12 @@ a:hover {
 .claims-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
 }
 
 /* Column widths via colgroup */
-.col-dot { width: 4%; }
-.col-id { width: 14%; }
-.col-name { width: 16%; }
-.col-vehicle { width: 22%; }
-.col-date { width: 14%; }
-.col-photos { width: 8%; }
-.col-status { width: 13%; }
-.col-action { width: 9%; }
+.col-dot { width: 40px; }
+.col-photos { width: 60px; }
+.col-action { width: 100px; }
 
 /* Dot cell */
 .cell-dot {
@@ -569,6 +563,7 @@ a:hover {
   letter-spacing: 0.05em;
   border-bottom: 1px solid var(--color-border);
   background: transparent;
+  white-space: nowrap;
 }
 
 .claims-table td {
