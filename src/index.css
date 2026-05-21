@@ -532,12 +532,21 @@ a:hover {
   border-collapse: collapse;
 }
 
-.claims-table th:last-child,
-.claims-table td:last-child {
-  text-align: right;
-  width: 1%;
-  white-space: nowrap;
-  padding-right: var(--space-md);
+/* Column widths via colgroup */
+.col-dot { width: 40px; }
+.col-photos { width: 50px; }
+.col-action { width: 90px; }
+
+/* Dot cell */
+.cell-dot {
+  padding-left: var(--space-md) !important;
+  padding-right: 0 !important;
+  text-align: center;
+}
+
+/* Action cell */
+.cell-action {
+  text-align: right !important;
 }
 
 .claims-table th {
