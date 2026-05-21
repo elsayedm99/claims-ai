@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { getSeverityColor } from '../utils/formatters';
 
 function AnnotationViewer({ photo, area, onClose }) {
+  const [showOverlay, setShowOverlay] = useState(false);
   const borderColor = getSeverityColor(area.severity);
 
   return (
@@ -11,6 +12,13 @@ function AnnotationViewer({ photo, area, onClose }) {
           <h3>AI Detection — {area.part}</h3>
           <button className="modal-close-btn" onClick={onClose}>✕</button>
         </div>
+
+        {/* Bias prevention hint */}
+        {!showOverlay && (
+          <div className="annotation-bias-hint">
+            👁️ Review the photo yourself first, then reveal the AI's detection to compare.
+          </div>
+        )}
 
         <div className="annotation-image-container">
           {photo ? (
@@ -22,8 +30,8 @@ function AnnotationViewer({ photo, area, onClose }) {
             </div>
           )}
 
-          {/* AI detection bounding box */}
-          {area.boundingBox && (
+          {/* AI detection bounding box — only shown when toggled */}
+          {showOverlay && area.boundingBox && (
             <div
               className="annotation-box"
               style={{
@@ -51,24 +59,35 @@ function AnnotationViewer({ photo, area, onClose }) {
           )}
         </div>
 
-        <div className="annotation-details">
-          <div className="annotation-detail-row">
-            <span className="annotation-detail-label">Damage Type</span>
-            <span>{area.type}</span>
+        {/* Toggle button */}
+        <button
+          className={`btn btn-sm annotation-toggle ${showOverlay ? 'btn-accent' : 'btn-secondary'}`}
+          onClick={() => setShowOverlay(!showOverlay)}
+        >
+          {showOverlay ? '🔍 Hide AI Detection' : '🤖 Show AI Detection'}
+        </button>
+
+        {/* Details — only shown when overlay is visible */}
+        {showOverlay && (
+          <div className="annotation-details">
+            <div className="annotation-detail-row">
+              <span className="annotation-detail-label">Damage Type</span>
+              <span>{area.type}</span>
+            </div>
+            <div className="annotation-detail-row">
+              <span className="annotation-detail-label">Severity</span>
+              <span style={{ color: borderColor, fontWeight: 600 }}>{area.severity}</span>
+            </div>
+            <div className="annotation-detail-row">
+              <span className="annotation-detail-label">Confidence</span>
+              <span>{Math.round(area.confidence * 100)}%</span>
+            </div>
+            <div className="annotation-detail-row">
+              <span className="annotation-detail-label">Recommended Action</span>
+              <span>{area.repairAction}</span>
+            </div>
           </div>
-          <div className="annotation-detail-row">
-            <span className="annotation-detail-label">Severity</span>
-            <span style={{ color: borderColor, fontWeight: 600 }}>{area.severity}</span>
-          </div>
-          <div className="annotation-detail-row">
-            <span className="annotation-detail-label">Confidence</span>
-            <span>{Math.round(area.confidence * 100)}%</span>
-          </div>
-          <div className="annotation-detail-row">
-            <span className="annotation-detail-label">Recommended Action</span>
-            <span>{area.repairAction}</span>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
