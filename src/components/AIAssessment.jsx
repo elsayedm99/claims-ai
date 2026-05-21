@@ -187,6 +187,13 @@ export function AIAssessment({ assessment, photos, onAnalyze, isAnalyzing, progr
       </div>
 
       {/* Damage list */}
+      <div className="damage-list-header">
+        <span>Part</span>
+        <span>Damage Type</span>
+        <span>Severity</span>
+        <span>Confidence</span>
+        <span>Repair Action</span>
+      </div>
       <div className="damage-list stagger-children">
         {assessment.damageAreas.map((area, index) => (
           <div
