@@ -532,21 +532,25 @@ a:hover {
   border-collapse: collapse;
 }
 
-/* Column widths via colgroup */
-.col-dot { width: 40px; }
-.col-photos { width: 60px; }
-.col-action { width: 100px; }
-
 /* Dot cell */
-.cell-dot {
-  padding-left: var(--space-md) !important;
-  padding-right: 0 !important;
-  text-align: center;
+.priority-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+  margin-right: 12px;
+  vertical-align: middle;
 }
 
 /* Action cell */
 .cell-action {
   text-align: right !important;
+}
+
+/* Shift Claim ID header text right to align with ID, bypassing the dot */
+.th-claim-id {
+  padding-left: calc(var(--space-lg) + 20px) !important;
 }
 
 .claims-table thead tr {
@@ -2880,14 +2884,6 @@ a:hover {
   white-space: nowrap;
 }
 
-.priority-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  box-shadow: 0 0 6px currentColor;
-  vertical-align: middle;
-}
 
 .photo-count {
   font-size: var(--font-size-sm);
