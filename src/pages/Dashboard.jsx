@@ -280,13 +280,13 @@ export function Dashboard({ claims, onAddClaim }) {
         <table className="claims-table">
           <thead>
             <tr>
-              <th className="th-claim-id">Claim ID</th>
+              <th>Claim ID</th>
               <th>Policyholder</th>
               <th>Vehicle</th>
               <th>Accident Date</th>
               <th>📷</th>
               <th>Status</th>
-              <th className="cell-action">Action</th>
+              <th style={{ textAlign: 'right' }}>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -296,12 +296,17 @@ export function Dashboard({ claims, onAddClaim }) {
                 onClick={() => navigate(`/claim/${claim.id}`)}
               >
                 <td>
-                  <span
-                    className="priority-dot"
-                    style={{ background: getPriorityColor(claim) }}
-                    title="Priority"
-                  />
-                  <span className="claim-id">{claim.id}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span
+                      className="priority-dot"
+                      style={{
+                        background: getPriorityColor(claim),
+                        flexShrink: 0
+                      }}
+                      title="Priority"
+                    />
+                    <span className="claim-id">{claim.id}</span>
+                  </div>
                 </td>
                 <td>
                   <span className="claim-policyholder">
@@ -323,7 +328,7 @@ export function Dashboard({ claims, onAddClaim }) {
                 <td>
                   <StatusBadge status={claim.status} />
                 </td>
-                <td className="cell-action">
+                <td style={{ textAlign: 'right' }}>
                   <button
                     className="btn btn-sm btn-secondary"
                     onClick={(e) => {

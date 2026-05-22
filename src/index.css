@@ -532,31 +532,6 @@ a:hover {
   border-collapse: collapse;
 }
 
-/* Dot cell */
-.priority-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  box-shadow: 0 0 6px currentColor;
-  margin-right: 12px;
-  vertical-align: middle;
-}
-
-/* Action cell */
-.cell-action {
-  text-align: right !important;
-}
-
-/* Shift Claim ID header text right to align with ID, bypassing the dot */
-.th-claim-id {
-  padding-left: calc(var(--space-lg) + 20px) !important;
-}
-
-.claims-table thead tr {
-  background: rgba(245, 246, 250, 0.9);
-}
-
 .claims-table th {
   text-align: left;
   padding: var(--space-lg);
@@ -566,8 +541,7 @@ a:hover {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-bottom: 1px solid var(--color-border);
-  background: transparent;
-  white-space: nowrap;
+  background: rgba(245, 246, 250, 0.9);
 }
 
 .claims-table td {
@@ -575,7 +549,6 @@ a:hover {
   border-bottom: 1px solid rgba(226, 229, 239, 0.8);
   font-size: var(--font-size-base);
   vertical-align: middle;
-  white-space: nowrap;
   transition: all var(--transition-fast);
 }
 
@@ -2884,6 +2857,13 @@ a:hover {
   white-space: nowrap;
 }
 
+.priority-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
 
 .photo-count {
   font-size: var(--font-size-sm);
