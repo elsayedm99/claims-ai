@@ -84,4 +84,6 @@ src/
 
 ## 📝 License
 
-Built as a prototype demonstration for Scale AI.
+## 📝 License
+
+This project is a product prototype for demonstration purposes.
