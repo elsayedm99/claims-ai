@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { formatCurrency } from '../utils/formatters';
 
 export function CostEstimate({ estimate, assessment, onUpdateEstimate }) {
@@ -25,6 +25,28 @@ export function CostEstimate({ estimate, assessment, onUpdateEstimate }) {
   const totalCost = totalParts + totalLabor;
   const partsPercent = totalCost > 0 ? Math.round((totalParts / totalCost) * 100) : 50;
   const laborPercent = 100 - partsPercent;
+
+  // Persist changes upstream whenever line items change
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (onUpdateEstimate) {
+      const newTotal = lineItems.reduce((s, i) => s + i.parts + i.labor, 0);
+      onUpdateEstimate({
+        ...estimate,
+        lineItems,
+        totalCost: newTotal,
+        confidenceRange: {
+          low: Math.round(newTotal * 0.85),
+          high: Math.round(newTotal * 1.15),
+        },
+        adjustedByAgent: isEdited,
+      });
+    }
+  }, [lineItems]);
 
   const handleCostChange = (index, field, value) => {
     const numValue = parseFloat(value) || 0;

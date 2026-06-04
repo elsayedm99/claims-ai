@@ -102,7 +102,7 @@ const EMPTY_NEW_DAMAGE = {
 };
 
 /* ===== Senior Adjuster Interactive Review of Agent's Work ===== */
-function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onContinue, photos }) {
+function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onContinue, photos, onAddAdjusterDamage }) {
   const { itemStates: agentStates = {}, flagComments = {}, addedDamages = [] } = agentReviewData || {};
 
   // Adjuster can assess each agent decision
@@ -137,18 +137,18 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onCont
 
   const handleAddDamage = () => {
     if (!newDamage.part.trim()) return;
-    setAdjusterAddedDamages((prev) => [
-      ...prev,
-      {
-        ...newDamage,
-        part: newDamage.part.trim(),
-        confidence: 0,
-        addedByAdjuster: true,
-        estimatedParts: 0,
-        estimatedLabor: 0,
-        boundingBox: null,
-      },
-    ]);
+    const damage = {
+      ...newDamage,
+      part: newDamage.part.trim(),
+      confidence: 0,
+      addedByAdjuster: true,
+      estimatedParts: 0,
+      estimatedLabor: 0,
+      boundingBox: null,
+    };
+    setAdjusterAddedDamages((prev) => [...prev, damage]);
+    // Also create a cost line for this damage
+    if (onAddAdjusterDamage) onAddAdjusterDamage(damage);
     setNewDamage(EMPTY_NEW_DAMAGE);
     setShowAddForm(false);
   };
@@ -466,7 +466,7 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onCont
 }
 
 /* ===== Main Component ===== */
-export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onConfirm, confirmed, role, agentReviewData, onContinue }) {
+export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onConfirm, confirmed, role, agentReviewData, onContinue, onAddAdjusterDamage }) {
   const [itemStates, setItemStates] = useState({});
   const [flagComments, setFlagComments] = useState({});
   const [viewingArea, setViewingArea] = useState(null);
@@ -494,6 +494,7 @@ export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onC
         agentNotes={agentNotes}
         onContinue={onContinue}
         photos={photos}
+        onAddAdjusterDamage={onAddAdjusterDamage}
       />
     );
   }

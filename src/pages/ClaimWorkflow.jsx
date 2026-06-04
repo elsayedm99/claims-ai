@@ -172,6 +172,28 @@ export function ClaimWorkflow({ claims, onUpdateClaim, role = 'agent' }) {
     }
   };
 
+  const handleUpdateEstimate = (updatedEstimate) => {
+    setEstimate(updatedEstimate);
+    updateClaim({ estimate: updatedEstimate });
+  };
+
+  const handleAdjusterAddDamage = (damage) => {
+    if (!estimate) return;
+    const updatedEstimate = {
+      ...estimate,
+      lineItems: [
+        ...estimate.lineItems,
+        {
+          description: `${damage.part} — ${damage.repairAction} (Sr. Adjuster Added)`,
+          parts: 0,
+          labor: 0,
+        },
+      ],
+    };
+    setEstimate(updatedEstimate);
+    updateClaim({ estimate: updatedEstimate });
+  };
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 1:
@@ -274,6 +296,7 @@ export function ClaimWorkflow({ claims, onUpdateClaim, role = 'agent' }) {
               role={role}
               agentReviewData={agentReviewData}
               onContinue={handleContinue}
+              onAddAdjusterDamage={handleAdjusterAddDamage}
             />
           </div>
         );
@@ -281,7 +304,7 @@ export function ClaimWorkflow({ claims, onUpdateClaim, role = 'agent' }) {
       case 5:
         return (
           <div className="fade-in">
-            <CostEstimate estimate={estimate} assessment={aiAssessment} />
+            <CostEstimate estimate={estimate} assessment={aiAssessment} onUpdateEstimate={handleUpdateEstimate} />
             {estimate && (
               <div style={{ marginTop: 'var(--space-xl)', textAlign: 'right' }}>
                 <button className="btn btn-primary" onClick={handleContinue}>
