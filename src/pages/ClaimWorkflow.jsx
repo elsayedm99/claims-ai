@@ -7,7 +7,7 @@ import { AgentReview } from '../components/AgentReview';
 import { CostEstimate } from '../components/CostEstimate';
 import { ApprovalPanel } from '../components/ApprovalPanel';
 import { analyzeDamage, generateEstimate } from '../services/aiService';
-import { formatDate } from '../utils/formatters';
+import { formatDate, formatCurrency } from '../utils/formatters';
 
 const STEPS = [
   { label: 'Claim Info', number: 1 },
@@ -229,8 +229,14 @@ export function ClaimWorkflow({ claims, onUpdateClaim, role = 'agent' }) {
               </div>
               <div className="info-item">
                 <span className="info-label">Deductible</span>
-                <span className="info-value">${claim.deductible || 500}</span>
+                <span className="info-value">{formatCurrency(claim.deductible || 500)}</span>
               </div>
+              {claim.estimatedVehicleValue && (
+                <div className="info-item">
+                  <span className="info-label">Estimated Vehicle Value</span>
+                  <span className="info-value">{formatCurrency(claim.estimatedVehicleValue)}</span>
+                </div>
+              )}
               <div className="info-item" style={{ gridColumn: '1 / -1' }}>
                 <span className="info-label">Description</span>
                 <span className="info-value">{claim.accidentDescription}</span>
