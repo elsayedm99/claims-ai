@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { getSeverityColor } from '../utils/formatters';
+import { DAMAGE_TYPES, SEVERITY_LEVELS } from '../data/mockClaims';
 
 function AnnotationViewer({ photo, area, onClose }) {
   const [showOverlay, setShowOverlay] = useState(false);
@@ -83,7 +84,7 @@ function AnnotationViewer({ photo, area, onClose }) {
               <span>{Math.round(area.confidence * 100)}%</span>
             </div>
             <div className="annotation-detail-row">
-              <span className="annotation-detail-label">Recommended Action</span>
+              <span className="annotation-detail-label">Repair Action</span>
               <span>{area.repairAction}</span>
             </div>
           </div>
@@ -93,9 +94,20 @@ function AnnotationViewer({ photo, area, onClose }) {
   );
 }
 
+const EMPTY_NEW_DAMAGE = {
+  part: '',
+  type: Object.values(DAMAGE_TYPES)[0],
+  severity: Object.values(SEVERITY_LEVELS)[0],
+  repairAction: 'Repair',
+};
+
 export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onConfirm, confirmed }) {
   const [itemStates, setItemStates] = useState({});
+  const [flagComments, setFlagComments] = useState({});
   const [viewingArea, setViewingArea] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newDamage, setNewDamage] = useState(EMPTY_NEW_DAMAGE);
+  const [addedDamages, setAddedDamages] = useState([]);
 
   if (!assessment) {
     return (
@@ -113,12 +125,55 @@ export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onC
       ...prev,
       [index]: prev[index] === action ? null : action,
     }));
+    // Clear flag comment if un-flagging
+    if (action === 'flagged' && itemStates[index] === 'flagged') {
+      setFlagComments((prev) => {
+        const next = { ...prev };
+        delete next[index];
+        return next;
+      });
+    }
   };
+
+  const handleFlagComment = (index, comment) => {
+    setFlagComments((prev) => ({
+      ...prev,
+      [index]: comment,
+    }));
+  };
+
+  const handleAddDamage = () => {
+    if (!newDamage.part.trim()) return;
+    setAddedDamages((prev) => [
+      ...prev,
+      {
+        ...newDamage,
+        part: newDamage.part.trim(),
+        confidence: 0,
+        addedByAgent: true,
+        estimatedParts: 0,
+        estimatedLabor: 0,
+        boundingBox: null,
+      },
+    ]);
+    setNewDamage(EMPTY_NEW_DAMAGE);
+    setShowAddForm(false);
+  };
+
+  const handleRemoveAdded = (addedIndex) => {
+    setAddedDamages((prev) => prev.filter((_, i) => i !== addedIndex));
+  };
+
+  // Combine AI findings + agent-added damages for counting
+  const allDamageAreas = [...assessment.damageAreas, ...addedDamages];
+  const totalItems = allDamageAreas.length;
 
   const confirmedCount = Object.values(itemStates).filter((v) => v === 'confirmed').length;
   const flaggedCount = Object.values(itemStates).filter((v) => v === 'flagged').length;
   const hasConfirmedAny = confirmedCount > 0;
-  const totalItems = assessment.damageAreas.length;
+
+  // Agent-added items use indices starting after AI items
+  const aiItemCount = assessment.damageAreas.length;
 
   return (
     <div className="card fade-in">
@@ -151,10 +206,13 @@ export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onC
           <span className="review-stat remaining">
             {totalItems - confirmedCount - flaggedCount} remaining
           </span>
+          {addedDamages.length > 0 && (
+            <span className="review-stat added">+ {addedDamages.length} added by agent</span>
+          )}
         </div>
       </div>
 
-      {/* Review items */}
+      {/* Review items — AI findings */}
       <div className="review-actions">
         {assessment.damageAreas.map((area, index) => {
           const state = itemStates[index];
@@ -195,9 +253,139 @@ export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onC
                   ⚑ Flag
                 </button>
               </div>
+
+              {/* Flag comment input — appears when item is flagged */}
+              {state === 'flagged' && (
+                <div className="flag-comment-container">
+                  <input
+                    type="text"
+                    className="flag-comment-input"
+                    placeholder="Why is this finding incorrect? (e.g., 'Damage is on right fender, not left')"
+                    value={flagComments[index] || ''}
+                    onChange={(e) => handleFlagComment(index, e.target.value)}
+                    autoFocus
+                  />
+                </div>
+              )}
             </div>
           );
         })}
+
+        {/* Agent-added damage items */}
+        {addedDamages.map((damage, addedIndex) => {
+          const globalIndex = aiItemCount + addedIndex;
+          const state = itemStates[globalIndex];
+
+          return (
+            <div className="review-item review-item--added" key={`added-${addedIndex}`}>
+              <div className="review-item-info">
+                <span className="review-item-part">
+                  <span className="review-added-badge">+ AGENT</span>
+                  {damage.part}
+                </span>
+                <span className="review-item-detail">
+                  {damage.type} • {damage.severity} • {damage.repairAction} • Added by agent (AI missed)
+                </span>
+              </div>
+              <div className="review-item-actions">
+                <button
+                  className={`btn btn-sm ${state === 'confirmed' ? 'btn-success' : 'btn-secondary'}`}
+                  onClick={() => handleAction(globalIndex, 'confirmed')}
+                >
+                  ✓ Confirm
+                </button>
+                <button
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => handleRemoveAdded(addedIndex)}
+                  title="Remove this item"
+                >
+                  ✕ Remove
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Add missed damage */}
+      <div className="add-damage-section">
+        {!showAddForm ? (
+          <button
+            className="btn btn-sm btn-secondary add-damage-trigger"
+            onClick={() => setShowAddForm(true)}
+          >
+            + Add Missed Damage
+          </button>
+        ) : (
+          <div className="add-damage-form">
+            <div className="add-damage-form-header">
+              <span className="add-damage-form-title">🔎 AI Missed Something?</span>
+              <button
+                className="btn btn-sm btn-secondary"
+                onClick={() => { setShowAddForm(false); setNewDamage(EMPTY_NEW_DAMAGE); }}
+              >
+                Cancel
+              </button>
+            </div>
+            <div className="add-damage-form-fields">
+              <div className="add-damage-field">
+                <label className="form-label">Damaged Part</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g., Right Quarter Panel"
+                  value={newDamage.part}
+                  onChange={(e) => setNewDamage((d) => ({ ...d, part: e.target.value }))}
+                  autoFocus
+                />
+              </div>
+              <div className="add-damage-field">
+                <label className="form-label">Damage Type</label>
+                <select
+                  className="form-select"
+                  value={newDamage.type}
+                  onChange={(e) => setNewDamage((d) => ({ ...d, type: e.target.value }))}
+                >
+                  {Object.values(DAMAGE_TYPES).map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="add-damage-field">
+                <label className="form-label">Severity</label>
+                <select
+                  className="form-select"
+                  value={newDamage.severity}
+                  onChange={(e) => setNewDamage((d) => ({ ...d, severity: e.target.value }))}
+                >
+                  {Object.values(SEVERITY_LEVELS).map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="add-damage-field">
+                <label className="form-label">Repair Action</label>
+                <select
+                  className="form-select"
+                  value={newDamage.repairAction}
+                  onChange={(e) => setNewDamage((d) => ({ ...d, repairAction: e.target.value }))}
+                >
+                  <option value="Repair">Repair</option>
+                  <option value="Repair & Repaint">Repair & Repaint</option>
+                  <option value="Replace">Replace</option>
+                  <option value="Inspect Further">Inspect Further</option>
+                </select>
+              </div>
+            </div>
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={handleAddDamage}
+              disabled={!newDamage.part.trim()}
+            >
+              + Add Finding
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Flagged warning */}
