@@ -151,20 +151,19 @@ export function ClaimWorkflow({ claims, onUpdateClaim, role = 'agent' }) {
       // Agent submitting for review
       updateClaim({ status: 'pending_approval', agentNotes });
       setApproval(null);
-      // Navigate back to dashboard after submission
       setTimeout(() => navigate('/'), 600);
     } else {
       // Adjuster approving
-      setApproval(data);
       updateClaim({ approval: data, status: 'approved' });
-      setTimeout(() => navigate('/'), 1200);
+      setApproval(data);
+      navigate('/');
     }
   };
 
   const handleReject = (data) => {
-    setApproval(data);
     updateClaim({ approval: data, status: 'rejected' });
-    setTimeout(() => navigate('/'), 1200);
+    setApproval(data);
+    navigate('/');
   };
 
   const handleContinue = () => {
