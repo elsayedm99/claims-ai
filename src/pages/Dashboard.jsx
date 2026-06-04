@@ -43,6 +43,8 @@ function NewClaimModal({ onClose, onAddClaim }) {
     year: '',
     accidentDate: '',
     description: '',
+    coverageType: 'Collision',
+    estimatedVehicleValue: '',
   });
 
   const handleChange = (e) => {
@@ -68,8 +70,9 @@ function NewClaimModal({ onClose, onAddClaim }) {
       reportedDate: new Date().toISOString().slice(0, 10),
       accidentDescription: form.description,
       accidentLocation: '',
-      coverageType: 'Collision',
-      deductible: 500,
+      coverageType: form.coverageType,
+      estimatedVehicleValue: Number(form.estimatedVehicleValue) || null,
+      deductible: form.coverageType === 'Comprehensive' ? 250 : 500,
       photos: [],
       status: 'new',
       aiAssessment: null,
@@ -154,6 +157,36 @@ function NewClaimModal({ onClose, onAddClaim }) {
                 value={form.year}
                 onChange={handleChange}
                 placeholder="e.g. 2023"
+              />
+            </div>
+          </div>
+
+          <div className="form-row-2">
+            <div className="form-group">
+              <label className="form-label">Coverage Type</label>
+              <select
+                className="form-input"
+                name="coverageType"
+                value={form.coverageType}
+                onChange={handleChange}
+              >
+                <option value="Collision">Collision</option>
+                <option value="Comprehensive">Comprehensive</option>
+                <option value="Liability">Liability</option>
+                <option value="Uninsured Motorist">Uninsured Motorist</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Estimated Vehicle Value ($)</label>
+              <input
+                className="form-input"
+                name="estimatedVehicleValue"
+                type="number"
+                value={form.estimatedVehicleValue}
+                onChange={handleChange}
+                placeholder="e.g. 28000"
+                min="0"
+                step="500"
               />
             </div>
           </div>

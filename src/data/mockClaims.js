@@ -63,6 +63,7 @@ export const initialClaims = [
     accidentLocation: '5th Ave & Main St, Portland, OR',
     coverageType: 'Collision',
     deductible: 500,
+    estimatedVehicleValue: 28500,
     photos: [
       {
         id: 'p1',
@@ -105,6 +106,7 @@ export const initialClaims = [
     accidentLocation: 'Riverside Mall Parking, Seattle, WA',
     coverageType: 'Collision',
     deductible: 1000,
+    estimatedVehicleValue: 24000,
     photos: [
       {
         id: 'p3',
@@ -141,6 +143,7 @@ export const initialClaims = [
     accidentLocation: 'Highway 26, Beaverton, OR',
     coverageType: 'Comprehensive',
     deductible: 500,
+    estimatedVehicleValue: 45500,
     photos: [
       {
         id: 'p4',
@@ -189,6 +192,7 @@ export const initialClaims = [
     accidentLocation: 'Main St, Austin, TX',
     coverageType: 'Collision',
     deductible: 500,
+    estimatedVehicleValue: 35000,
     photos: [
       {
         id: 'p7',
@@ -260,6 +264,7 @@ export const initialClaims = [
     accidentLocation: 'Oak Blvd & 12th St, San Francisco, CA',
     coverageType: 'Collision',
     deductible: 1000,
+    estimatedVehicleValue: 42000,
     photos: [
       {
         id: 'p8',
