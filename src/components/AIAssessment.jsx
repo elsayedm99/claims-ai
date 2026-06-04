@@ -73,12 +73,12 @@ export function AIAssessment({ assessment, photos, onAnalyze, isAnalyzing, progr
           <div className="ai-trigger-icon">🤖</div>
           <h3 className="ai-trigger-title">AI Damage Assessment</h3>
           <p>
-            Our computer vision model will analyze the uploaded photos to detect damage areas,
+            Our AI model will analyze the uploaded photos to detect damage areas,
             classify severity, and estimate repair costs.
           </p>
           <div className="ai-model-badge">
             <span className="ai-model-badge-dot" />
-            DamageNet v2.4 • Computer Vision
+            DamageNet v2.4 • Multimodal AI
           </div>
           <div className="ai-model-stats">
             <span>🎯 94.2% accuracy</span>
