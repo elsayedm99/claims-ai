@@ -101,7 +101,113 @@ const EMPTY_NEW_DAMAGE = {
   repairAction: 'Repair',
 };
 
-export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onConfirm, confirmed }) {
+/* ===== Senior Adjuster Read-Only View ===== */
+function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes }) {
+  const { itemStates = {}, flagComments = {}, addedDamages = [] } = agentReviewData || {};
+
+  const confirmedCount = Object.values(itemStates).filter((v) => v === 'confirmed').length;
+  const flaggedCount = Object.values(itemStates).filter((v) => v === 'flagged').length;
+  const totalAI = assessment.damageAreas.length;
+
+  return (
+    <div className="card fade-in">
+      {/* Header */}
+      <div className="human-checkpoint-header">
+        <div className="human-checkpoint-icon">👔</div>
+        <div className="human-checkpoint-content">
+          <h3 className="human-checkpoint-title">Agent Review Summary</h3>
+          <p className="human-checkpoint-desc">
+            The claims agent has reviewed the AI assessment below. Review their decisions before approving or rejecting this claim.
+          </p>
+        </div>
+      </div>
+
+      {/* Stats bar */}
+      <div className="review-progress">
+        <div className="review-progress-bar">
+          <div
+            className="review-progress-fill confirmed"
+            style={{ width: `${(confirmedCount / totalAI) * 100}%` }}
+          />
+          <div
+            className="review-progress-fill flagged"
+            style={{ width: `${(flaggedCount / totalAI) * 100}%` }}
+          />
+        </div>
+        <div className="review-progress-stats">
+          <span className="review-stat confirmed">✓ {confirmedCount} confirmed</span>
+          <span className="review-stat flagged">⚑ {flaggedCount} flagged</span>
+          {addedDamages.length > 0 && (
+            <span className="review-stat added">+ {addedDamages.length} added by agent</span>
+          )}
+        </div>
+      </div>
+
+      {/* AI findings with agent decisions */}
+      <div className="review-actions">
+        {assessment.damageAreas.map((area, index) => {
+          const state = itemStates[index];
+          let itemClass = 'review-item';
+          if (state === 'confirmed') itemClass += ' review-item--confirmed';
+          if (state === 'flagged') itemClass += ' review-item--flagged';
+
+          return (
+            <div className={itemClass} key={index}>
+              <div className="review-item-info">
+                <span className="review-item-part">
+                  {state === 'confirmed' && <span className="review-check">✓</span>}
+                  {state === 'flagged' && <span className="review-flag">⚑</span>}
+                  {!state && <span className="review-pending-badge">—</span>}
+                  {area.part}
+                  <span className="adjuster-verdict-badge" data-state={state || 'unreviewed'}>
+                    {state === 'confirmed' ? 'Agent Confirmed' : state === 'flagged' ? 'Agent Flagged' : 'Not Reviewed'}
+                  </span>
+                </span>
+                <span className="review-item-detail">
+                  {area.type} • {area.severity} • {Math.round(area.confidence * 100)}% confidence • {area.repairAction}
+                </span>
+              </div>
+
+              {/* Flag comment — read-only */}
+              {state === 'flagged' && flagComments[index] && (
+                <div className="flag-comment-container flag-comment-readonly">
+                  <span className="flag-comment-label">Agent's reason:</span> {flagComments[index]}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Agent-added damages */}
+        {addedDamages.map((damage, idx) => (
+          <div className="review-item review-item--added" key={`added-${idx}`}>
+            <div className="review-item-info">
+              <span className="review-item-part">
+                <span className="review-added-badge">+ AGENT</span>
+                {damage.part}
+                <span className="adjuster-verdict-badge" data-state="added">AI Missed — Agent Added</span>
+              </span>
+              <span className="review-item-detail">
+                {damage.type} • {damage.severity} • {damage.repairAction}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Agent notes */}
+      {agentNotes && (
+        <div className="adjuster-agent-notes">
+          <span className="adjuster-notes-label">📝 Agent Notes</span>
+          <p className="adjuster-notes-text">{agentNotes}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ===== Main Component ===== */
+export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onConfirm, confirmed, role, agentReviewData }) {
   const [itemStates, setItemStates] = useState({});
   const [flagComments, setFlagComments] = useState({});
   const [viewingArea, setViewingArea] = useState(null);
@@ -117,6 +223,17 @@ export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onC
           <p>Run AI analysis first to review findings.</p>
         </div>
       </div>
+    );
+  }
+
+  // Senior adjuster sees read-only summary of agent's review
+  if (role === 'adjuster' && agentReviewData) {
+    return (
+      <AdjusterReviewSummary
+        assessment={assessment}
+        agentReviewData={agentReviewData}
+        agentNotes={agentNotes}
+      />
     );
   }
 
@@ -162,6 +279,17 @@ export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onC
 
   const handleRemoveAdded = (addedIndex) => {
     setAddedDamages((prev) => prev.filter((_, i) => i !== addedIndex));
+  };
+
+  const handleConfirmAndPersist = () => {
+    // Bundle the review state and pass it up
+    const reviewData = {
+      itemStates,
+      flagComments,
+      addedDamages,
+      reviewedAt: new Date().toISOString(),
+    };
+    onConfirm(reviewData);
   };
 
   // Combine AI findings + agent-added damages for counting
@@ -410,7 +538,7 @@ export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onC
       <div style={{ marginTop: 'var(--space-xl)', textAlign: 'right' }}>
         <button
           className="btn btn-primary btn-lg"
-          onClick={onConfirm}
+          onClick={handleConfirmAndPersist}
           disabled={!hasConfirmedAny || confirmed}
         >
           {confirmed ? '✓ Assessment Confirmed' : 'Confirm Assessment & Continue'}

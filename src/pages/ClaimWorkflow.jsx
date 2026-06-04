@@ -42,6 +42,7 @@ export function ClaimWorkflow({ claims, onUpdateClaim, role = 'agent' }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState({ stage: '', message: '', percent: 0 });
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
+  const [agentReviewData, setAgentReviewData] = useState(claim?.agentReviewData || null);
 
   const updateClaim = useCallback(
     (updates) => {
@@ -110,8 +111,13 @@ export function ClaimWorkflow({ claims, onUpdateClaim, role = 'agent' }) {
     }
   };
 
-  const handleConfirmReview = () => {
+  const handleConfirmReview = (reviewData) => {
     setReviewConfirmed(true);
+
+    // Persist the agent's review decisions
+    if (reviewData) {
+      setAgentReviewData(reviewData);
+    }
 
     // Generate estimate when review is confirmed
     if (aiAssessment) {
@@ -121,6 +127,7 @@ export function ClaimWorkflow({ claims, onUpdateClaim, role = 'agent' }) {
         agentNotes,
         estimate: est,
         status: 'assessed',
+        agentReviewData: reviewData || null,
       });
     }
 
@@ -253,6 +260,8 @@ export function ClaimWorkflow({ claims, onUpdateClaim, role = 'agent' }) {
               onNotesChange={setAgentNotes}
               onConfirm={handleConfirmReview}
               confirmed={reviewConfirmed}
+              role={role}
+              agentReviewData={agentReviewData}
             />
           </div>
         );
