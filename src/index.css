@@ -2912,6 +2912,25 @@ a:hover {
   margin: 0;
 }
 
+/* Adjuster-added items */
+.review-item--adjuster-added {
+  border-left: 3px solid #f59e0b !important;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), transparent);
+}
+
+.review-adjuster-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  background: #f59e0b;
+  color: white;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-right: var(--space-xs);
+  vertical-align: middle;
+}
+
 /* ===== Cost Estimate Enhancements ===== */
 .cost-breakdown-bar {
   display: flex;

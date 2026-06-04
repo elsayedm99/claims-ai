@@ -102,23 +102,64 @@ const EMPTY_NEW_DAMAGE = {
 };
 
 /* ===== Senior Adjuster Interactive Review of Agent's Work ===== */
-function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onContinue }) {
+function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onContinue, photos }) {
   const { itemStates: agentStates = {}, flagComments = {}, addedDamages = [] } = agentReviewData || {};
 
   // Adjuster can assess each agent decision
   const [adjusterStates, setAdjusterStates] = useState({});
+  const [adjusterComments, setAdjusterComments] = useState({});
+  const [viewingArea, setViewingArea] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newDamage, setNewDamage] = useState(EMPTY_NEW_DAMAGE);
+  const [adjusterAddedDamages, setAdjusterAddedDamages] = useState([]);
 
   const handleAdjusterAction = (key, action) => {
     setAdjusterStates((prev) => ({
       ...prev,
       [key]: prev[key] === action ? null : action,
     }));
+    // Clear comment if un-disputing
+    if (action === 'flagged' && adjusterStates[key] === 'flagged') {
+      setAdjusterComments((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }
   };
 
-  const totalItems = assessment.damageAreas.length + addedDamages.length;
+  const handleAdjusterComment = (key, comment) => {
+    setAdjusterComments((prev) => ({
+      ...prev,
+      [key]: comment,
+    }));
+  };
+
+  const handleAddDamage = () => {
+    if (!newDamage.part.trim()) return;
+    setAdjusterAddedDamages((prev) => [
+      ...prev,
+      {
+        ...newDamage,
+        part: newDamage.part.trim(),
+        confidence: 0,
+        addedByAdjuster: true,
+        estimatedParts: 0,
+        estimatedLabor: 0,
+        boundingBox: null,
+      },
+    ]);
+    setNewDamage(EMPTY_NEW_DAMAGE);
+    setShowAddForm(false);
+  };
+
+  const handleRemoveAdded = (idx) => {
+    setAdjusterAddedDamages((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const totalItems = assessment.damageAreas.length + addedDamages.length + adjusterAddedDamages.length;
   const adjusterConfirmed = Object.values(adjusterStates).filter((v) => v === 'confirmed').length;
   const adjusterFlagged = Object.values(adjusterStates).filter((v) => v === 'flagged').length;
-  const hasReviewedAny = adjusterConfirmed > 0 || adjusterFlagged > 0;
 
   return (
     <div className="card fade-in">
@@ -128,7 +169,7 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onCont
         <div className="human-checkpoint-content">
           <h3 className="human-checkpoint-title">Review Agent's Assessment</h3>
           <p className="human-checkpoint-desc">
-            The claims agent has reviewed the AI findings below. Assess whether you agree with each of the agent's decisions, then continue to the cost estimate.
+            The claims agent has reviewed the AI findings below. Use "View Detection" to inspect the AI's bounding box on the photo, then assess each of the agent's decisions.
           </p>
         </div>
       </div>
@@ -151,6 +192,9 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onCont
           <span className="review-stat remaining">
             {totalItems - adjusterConfirmed - adjusterFlagged} remaining
           </span>
+          {adjusterAddedDamages.length > 0 && (
+            <span className="review-stat added">+ {adjusterAddedDamages.length} added by adjuster</span>
+          )}
         </div>
       </div>
 
@@ -181,6 +225,13 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onCont
 
               <div className="review-item-actions">
                 <button
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => setViewingArea(area)}
+                  title="View AI detection on photo"
+                >
+                  🔍 View Detection
+                </button>
+                <button
                   className={`btn btn-sm ${adjusterState === 'confirmed' ? 'btn-success' : 'btn-secondary'}`}
                   onClick={() => handleAdjusterAction(`ai-${index}`, 'confirmed')}
                 >
@@ -194,10 +245,24 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onCont
                 </button>
               </div>
 
-              {/* Agent's flag comment — read-only */}
+              {/* Agent's flag comment — read-only context */}
               {agentState === 'flagged' && flagComments[index] && (
                 <div className="flag-comment-container flag-comment-readonly">
                   <span className="flag-comment-label">Agent's reason:</span> {flagComments[index]}
+                </div>
+              )}
+
+              {/* Adjuster dispute comment */}
+              {adjusterState === 'flagged' && (
+                <div className="flag-comment-container">
+                  <input
+                    type="text"
+                    className="flag-comment-input"
+                    placeholder="What needs correcting? (e.g., 'Severity should be Moderate, not Minor')"
+                    value={adjusterComments[`ai-${index}`] || ''}
+                    onChange={(e) => handleAdjusterComment(`ai-${index}`, e.target.value)}
+                    autoFocus
+                  />
                 </div>
               )}
             </div>
@@ -239,9 +304,128 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onCont
                   ⚑ Dispute
                 </button>
               </div>
+
+              {/* Adjuster dispute comment for agent-added items */}
+              {adjusterState === 'flagged' && (
+                <div className="flag-comment-container">
+                  <input
+                    type="text"
+                    className="flag-comment-input"
+                    placeholder="Why do you disagree with this addition?"
+                    value={adjusterComments[`added-${idx}`] || ''}
+                    onChange={(e) => handleAdjusterComment(`added-${idx}`, e.target.value)}
+                    autoFocus
+                  />
+                </div>
+              )}
             </div>
           );
         })}
+
+        {/* Adjuster-added damage items */}
+        {adjusterAddedDamages.map((damage, idx) => (
+          <div className="review-item review-item--adjuster-added" key={`adj-added-${idx}`}>
+            <div className="review-item-info">
+              <span className="review-item-part">
+                <span className="review-adjuster-badge">+ SR. ADJUSTER</span>
+                {damage.part}
+              </span>
+              <span className="review-item-detail">
+                {damage.type} • {damage.severity} • {damage.repairAction} • Both AI and agent missed
+              </span>
+            </div>
+            <div className="review-item-actions">
+              <button
+                className="btn btn-sm btn-secondary"
+                onClick={() => handleRemoveAdded(idx)}
+                title="Remove this item"
+              >
+                ✕ Remove
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Add missed damage — adjuster */}
+      <div className="add-damage-section">
+        {!showAddForm ? (
+          <button
+            className="btn btn-sm btn-secondary add-damage-trigger"
+            onClick={() => setShowAddForm(true)}
+          >
+            + Add Missed Damage
+          </button>
+        ) : (
+          <div className="add-damage-form">
+            <div className="add-damage-form-header">
+              <span className="add-damage-form-title">🔎 Both AI and Agent Missed Something?</span>
+              <button
+                className="btn btn-sm btn-secondary"
+                onClick={() => { setShowAddForm(false); setNewDamage(EMPTY_NEW_DAMAGE); }}
+              >
+                Cancel
+              </button>
+            </div>
+            <div className="add-damage-form-fields">
+              <div className="add-damage-field">
+                <label className="form-label">Damaged Part</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g., Undercarriage Frame"
+                  value={newDamage.part}
+                  onChange={(e) => setNewDamage((d) => ({ ...d, part: e.target.value }))}
+                  autoFocus
+                />
+              </div>
+              <div className="add-damage-field">
+                <label className="form-label">Damage Type</label>
+                <select
+                  className="form-select"
+                  value={newDamage.type}
+                  onChange={(e) => setNewDamage((d) => ({ ...d, type: e.target.value }))}
+                >
+                  {Object.values(DAMAGE_TYPES).map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="add-damage-field">
+                <label className="form-label">Severity</label>
+                <select
+                  className="form-select"
+                  value={newDamage.severity}
+                  onChange={(e) => setNewDamage((d) => ({ ...d, severity: e.target.value }))}
+                >
+                  {Object.values(SEVERITY_LEVELS).map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="add-damage-field">
+                <label className="form-label">Repair Action</label>
+                <select
+                  className="form-select"
+                  value={newDamage.repairAction}
+                  onChange={(e) => setNewDamage((d) => ({ ...d, repairAction: e.target.value }))}
+                >
+                  <option value="Repair">Repair</option>
+                  <option value="Repair & Repaint">Repair & Repaint</option>
+                  <option value="Replace">Replace</option>
+                  <option value="Inspect Further">Inspect Further</option>
+                </select>
+              </div>
+            </div>
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={handleAddDamage}
+              disabled={!newDamage.part.trim()}
+            >
+              + Add Finding
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Agent notes */}
@@ -268,6 +452,15 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onCont
           Continue →
         </button>
       </div>
+
+      {/* Annotation viewer modal — same as agent gets */}
+      {viewingArea && (
+        <AnnotationViewer
+          photo={photos?.[0] || null}
+          area={viewingArea}
+          onClose={() => setViewingArea(null)}
+        />
+      )}
     </div>
   );
 }
@@ -300,6 +493,7 @@ export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onC
         agentReviewData={agentReviewData}
         agentNotes={agentNotes}
         onContinue={onContinue}
+        photos={photos}
       />
     );
   }
