@@ -122,6 +122,18 @@ export function ClaimWorkflow({ claims, onUpdateClaim, role = 'agent' }) {
     // Generate estimate when review is confirmed
     if (aiAssessment) {
       const est = generateEstimate(aiAssessment);
+
+      // Append agent-added damages as new cost lines (with $0 for agent to fill in)
+      if (reviewData?.addedDamages?.length > 0) {
+        reviewData.addedDamages.forEach((damage) => {
+          est.lineItems.push({
+            description: `${damage.part} — ${damage.repairAction} (Agent Added)`,
+            parts: 0,
+            labor: 0,
+          });
+        });
+      }
+
       setEstimate(est);
       updateClaim({
         agentNotes,
@@ -262,6 +274,7 @@ export function ClaimWorkflow({ claims, onUpdateClaim, role = 'agent' }) {
               confirmed={reviewConfirmed}
               role={role}
               agentReviewData={agentReviewData}
+              onContinue={handleContinue}
             />
           </div>
         );

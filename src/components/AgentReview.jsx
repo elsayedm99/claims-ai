@@ -101,13 +101,24 @@ const EMPTY_NEW_DAMAGE = {
   repairAction: 'Repair',
 };
 
-/* ===== Senior Adjuster Read-Only View ===== */
-function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes }) {
-  const { itemStates = {}, flagComments = {}, addedDamages = [] } = agentReviewData || {};
+/* ===== Senior Adjuster Interactive Review of Agent's Work ===== */
+function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes, onContinue }) {
+  const { itemStates: agentStates = {}, flagComments = {}, addedDamages = [] } = agentReviewData || {};
 
-  const confirmedCount = Object.values(itemStates).filter((v) => v === 'confirmed').length;
-  const flaggedCount = Object.values(itemStates).filter((v) => v === 'flagged').length;
-  const totalAI = assessment.damageAreas.length;
+  // Adjuster can assess each agent decision
+  const [adjusterStates, setAdjusterStates] = useState({});
+
+  const handleAdjusterAction = (key, action) => {
+    setAdjusterStates((prev) => ({
+      ...prev,
+      [key]: prev[key] === action ? null : action,
+    }));
+  };
+
+  const totalItems = assessment.damageAreas.length + addedDamages.length;
+  const adjusterConfirmed = Object.values(adjusterStates).filter((v) => v === 'confirmed').length;
+  const adjusterFlagged = Object.values(adjusterStates).filter((v) => v === 'flagged').length;
+  const hasReviewedAny = adjusterConfirmed > 0 || adjusterFlagged > 0;
 
   return (
     <div className="card fade-in">
@@ -115,52 +126,52 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes }) {
       <div className="human-checkpoint-header">
         <div className="human-checkpoint-icon">👔</div>
         <div className="human-checkpoint-content">
-          <h3 className="human-checkpoint-title">Agent Review Summary</h3>
+          <h3 className="human-checkpoint-title">Review Agent's Assessment</h3>
           <p className="human-checkpoint-desc">
-            The claims agent has reviewed the AI assessment below. Review their decisions before approving or rejecting this claim.
+            The claims agent has reviewed the AI findings below. Assess whether you agree with each of the agent's decisions, then continue to the cost estimate.
           </p>
         </div>
       </div>
 
-      {/* Stats bar */}
+      {/* Adjuster progress bar */}
       <div className="review-progress">
         <div className="review-progress-bar">
           <div
             className="review-progress-fill confirmed"
-            style={{ width: `${(confirmedCount / totalAI) * 100}%` }}
+            style={{ width: `${(adjusterConfirmed / totalItems) * 100}%` }}
           />
           <div
             className="review-progress-fill flagged"
-            style={{ width: `${(flaggedCount / totalAI) * 100}%` }}
+            style={{ width: `${(adjusterFlagged / totalItems) * 100}%` }}
           />
         </div>
         <div className="review-progress-stats">
-          <span className="review-stat confirmed">✓ {confirmedCount} confirmed</span>
-          <span className="review-stat flagged">⚑ {flaggedCount} flagged</span>
-          {addedDamages.length > 0 && (
-            <span className="review-stat added">+ {addedDamages.length} added by agent</span>
-          )}
+          <span className="review-stat confirmed">✓ {adjusterConfirmed} agreed</span>
+          <span className="review-stat flagged">⚑ {adjusterFlagged} disputed</span>
+          <span className="review-stat remaining">
+            {totalItems - adjusterConfirmed - adjusterFlagged} remaining
+          </span>
         </div>
       </div>
 
-      {/* AI findings with agent decisions */}
+      {/* AI findings with agent decisions + adjuster actions */}
       <div className="review-actions">
         {assessment.damageAreas.map((area, index) => {
-          const state = itemStates[index];
+          const agentState = agentStates[index];
+          const adjusterState = adjusterStates[`ai-${index}`];
           let itemClass = 'review-item';
-          if (state === 'confirmed') itemClass += ' review-item--confirmed';
-          if (state === 'flagged') itemClass += ' review-item--flagged';
+          if (adjusterState === 'confirmed') itemClass += ' review-item--confirmed';
+          if (adjusterState === 'flagged') itemClass += ' review-item--flagged';
 
           return (
             <div className={itemClass} key={index}>
               <div className="review-item-info">
                 <span className="review-item-part">
-                  {state === 'confirmed' && <span className="review-check">✓</span>}
-                  {state === 'flagged' && <span className="review-flag">⚑</span>}
-                  {!state && <span className="review-pending-badge">—</span>}
+                  {adjusterState === 'confirmed' && <span className="review-check">✓</span>}
+                  {adjusterState === 'flagged' && <span className="review-flag">⚑</span>}
                   {area.part}
-                  <span className="adjuster-verdict-badge" data-state={state || 'unreviewed'}>
-                    {state === 'confirmed' ? 'Agent Confirmed' : state === 'flagged' ? 'Agent Flagged' : 'Not Reviewed'}
+                  <span className="adjuster-verdict-badge" data-state={agentState || 'unreviewed'}>
+                    {agentState === 'confirmed' ? 'Agent Confirmed' : agentState === 'flagged' ? 'Agent Flagged' : 'Not Reviewed'}
                   </span>
                 </span>
                 <span className="review-item-detail">
@@ -168,8 +179,23 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes }) {
                 </span>
               </div>
 
-              {/* Flag comment — read-only */}
-              {state === 'flagged' && flagComments[index] && (
+              <div className="review-item-actions">
+                <button
+                  className={`btn btn-sm ${adjusterState === 'confirmed' ? 'btn-success' : 'btn-secondary'}`}
+                  onClick={() => handleAdjusterAction(`ai-${index}`, 'confirmed')}
+                >
+                  ✓ Agree
+                </button>
+                <button
+                  className={`btn btn-sm ${adjusterState === 'flagged' ? 'btn-danger' : 'btn-secondary'}`}
+                  onClick={() => handleAdjusterAction(`ai-${index}`, 'flagged')}
+                >
+                  ⚑ Dispute
+                </button>
+              </div>
+
+              {/* Agent's flag comment — read-only */}
+              {agentState === 'flagged' && flagComments[index] && (
                 <div className="flag-comment-container flag-comment-readonly">
                   <span className="flag-comment-label">Agent's reason:</span> {flagComments[index]}
                 </div>
@@ -179,20 +205,43 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes }) {
         })}
 
         {/* Agent-added damages */}
-        {addedDamages.map((damage, idx) => (
-          <div className="review-item review-item--added" key={`added-${idx}`}>
-            <div className="review-item-info">
-              <span className="review-item-part">
-                <span className="review-added-badge">+ AGENT</span>
-                {damage.part}
-                <span className="adjuster-verdict-badge" data-state="added">AI Missed — Agent Added</span>
-              </span>
-              <span className="review-item-detail">
-                {damage.type} • {damage.severity} • {damage.repairAction}
-              </span>
+        {addedDamages.map((damage, idx) => {
+          const adjusterState = adjusterStates[`added-${idx}`];
+          let itemClass = 'review-item review-item--added';
+          if (adjusterState === 'confirmed') itemClass += ' review-item--confirmed';
+          if (adjusterState === 'flagged') itemClass += ' review-item--flagged';
+
+          return (
+            <div className={itemClass} key={`added-${idx}`}>
+              <div className="review-item-info">
+                <span className="review-item-part">
+                  {adjusterState === 'confirmed' && <span className="review-check">✓</span>}
+                  {adjusterState === 'flagged' && <span className="review-flag">⚑</span>}
+                  <span className="review-added-badge">+ AGENT</span>
+                  {damage.part}
+                  <span className="adjuster-verdict-badge" data-state="added">AI Missed — Agent Added</span>
+                </span>
+                <span className="review-item-detail">
+                  {damage.type} • {damage.severity} • {damage.repairAction}
+                </span>
+              </div>
+              <div className="review-item-actions">
+                <button
+                  className={`btn btn-sm ${adjusterState === 'confirmed' ? 'btn-success' : 'btn-secondary'}`}
+                  onClick={() => handleAdjusterAction(`added-${idx}`, 'confirmed')}
+                >
+                  ✓ Agree
+                </button>
+                <button
+                  className={`btn btn-sm ${adjusterState === 'flagged' ? 'btn-danger' : 'btn-secondary'}`}
+                  onClick={() => handleAdjusterAction(`added-${idx}`, 'flagged')}
+                >
+                  ⚑ Dispute
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Agent notes */}
@@ -202,12 +251,29 @@ function AdjusterReviewSummary({ assessment, agentReviewData, agentNotes }) {
           <p className="adjuster-notes-text">{agentNotes}</p>
         </div>
       )}
+
+      {/* Disputed warning */}
+      {adjusterFlagged > 0 && (
+        <div className="review-warning">
+          ⚠️ {adjusterFlagged} disputed item{adjusterFlagged > 1 ? 's' : ''} — consider returning this claim to the agent for revision.
+        </div>
+      )}
+
+      {/* Continue button */}
+      <div style={{ marginTop: 'var(--space-xl)', textAlign: 'right' }}>
+        <button
+          className="btn btn-primary btn-lg"
+          onClick={onContinue}
+        >
+          Continue →
+        </button>
+      </div>
     </div>
   );
 }
 
 /* ===== Main Component ===== */
-export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onConfirm, confirmed, role, agentReviewData }) {
+export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onConfirm, confirmed, role, agentReviewData, onContinue }) {
   const [itemStates, setItemStates] = useState({});
   const [flagComments, setFlagComments] = useState({});
   const [viewingArea, setViewingArea] = useState(null);
@@ -226,13 +292,14 @@ export function AgentReview({ assessment, photos, agentNotes, onNotesChange, onC
     );
   }
 
-  // Senior adjuster sees read-only summary of agent's review
+  // Senior adjuster sees interactive review of agent's decisions
   if (role === 'adjuster' && agentReviewData) {
     return (
       <AdjusterReviewSummary
         assessment={assessment}
         agentReviewData={agentReviewData}
         agentNotes={agentNotes}
+        onContinue={onContinue}
       />
     );
   }
